@@ -1,107 +1,101 @@
 import streamlit as st
 from collections import Counter
 
-st.set_page_config(page_title="百家樂預測系統", layout="centered")
+st.set_page_config(page_title="百家樂分邊預測", layout="wide")
 
-# 🧠 進階預測邏輯
-def smart_count(cards):
-    count = 0
+# 🧠 分邊進階加權預測邏輯
+def score_side(cards):
+    score = 0
     for c in cards:
         if c in ['4', '5', '6']:
-            count += 1.5
+            score += 1.5
         elif c == '7':
-            count += 1
+            score += 1
         elif c in ['A', '2', '3']:
-            count -= 1
+            score -= 1
     if sum(c in ['4', '5', '6'] for c in cards) >= 2:
-        count += 1
-    return count
+        score += 1
+    return score
 
-def predict_result(score):
-    if score >= 1:
+def predict_result(banker_cards, player_cards):
+    b_score = score_side(banker_cards)
+    p_score = score_side(player_cards)
+    diff = b_score - p_score
+    if diff >= 1:
         return "莊"
-    elif score <= -1:
+    elif diff <= -1:
         return "閒"
     else:
         return "和或不下"
 
 # 初始化狀態
-if 'selected_cards' not in st.session_state:
-    st.session_state.selected_cards = []
+for key in ["banker_cards", "player_cards", "records", "history"]:
+    if key not in st.session_state:
+        st.session_state[key] = []
+        st.title("🎴 百家樂分邊選牌預測")
 
-if 'records' not in st.session_state:
-    st.session_state.records = []
+# 模式選擇（單局 / 累積）
+mode = st.radio("模式選擇", ["單局預測", "累積預測"], horizontal=True)
 
-if 'history' not in st.session_state:
-    st.session_state.history = []
-    st.title("🃏 百家樂預測系統 v2")
+# 分左右兩邊選牌
+col1, col2 = st.columns(2)
 
-st.markdown("### 請點選最多 6 張牌：")
-card_values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
-card_cols = st.columns(len(card_values))
+with col1:
+    st.subheader("🟥 選擇莊的牌（最多3張）")
+    for card in ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']:
+        if st.button(card + "（莊）", key="B_" + card):
+            if len(st.session_state.banker_cards) < 3:
+                st.session_state.banker_cards.append(card)
 
-for i, val in enumerate(card_values):
-    with card_cols[i]:
-        if st.button(val, key=f"card_btn_{val}", use_container_width=True, type="secondary"):
-            if len(st.session_state.selected_cards) < 6:
-                st.session_state.selected_cards.append(val)
+    st.write("已選牌：", "、".join(st.session_state.banker_cards))
+    if st.button("🔁 清除莊牌"):
+        st.session_state.banker_cards = []
 
-# 顯示目前已選的牌
-st.markdown("**你目前選的牌：**")
-st.write("、".join(st.session_state.selected_cards) if st.session_state.selected_cards else "尚未選擇")
+with col2:
+    st.subheader("🟦 選擇閒的牌（最多3張）")
+    for card in ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']:
+        if st.button(card + "（閒）", key="P_" + card):
+            if len(st.session_state.player_cards) < 3:
+                st.session_state.player_cards.append(card)
 
-colA, colB = st.columns(2)
-if colA.button("🔙 移除最後一張"):
-    if st.session_state.selected_cards:
-        st.session_state.selected_cards.pop()
+    st.write("已選牌：", "、".join(st.session_state.player_cards))
+    if st.button("🔁 清除閒牌"):
+        st.session_state.player_cards = []
 
-if colB.button("🧹 清除全部選牌"):
-    st.session_state.selected_cards = []
+# 預測與紀錄
+if len(st.session_state.banker_cards) > 0 and len(st.session_state.player_cards) > 0:
+    result = predict_result(st.session_state.banker_cards, st.session_state.player_cards)
+    color = {"莊": "red", "閒": "blue", "和或不下": "green"}[result]
+    st.markdown(f"### 🎯 **預測結果：<span style='color:{color}'>{result}</span>**", unsafe_allow_html=True)
 
-mode = st.radio("預測模式", ["單局預測", "累積加減"])
-
-if mode == "累積加減":
-    if st.button("➕ 加入累積"):
-        st.session_state.records.extend(st.session_state.selected_cards)
-        st.session_state.selected_cards = []
-
-    total_score = smart_count(st.session_state.records)
-    result = predict_result(total_score)
-    st.markdown(f"累積牌數：{len(st.session_state.records)} 張")
-
-else:
-    score = smart_count(st.session_state.selected_cards)
-    result = predict_result(score)
-
-# 顏色顯示結果
-color_map = {"莊": "red", "閒": "blue", "和或不下": "green"}
-st.markdown(f"### 🤖 預測建議：<span style='color:{color_map.get(result)}'>{result}</span>", unsafe_allow_html=True)
-
-if st.button("📥 紀錄此預測"):
-    st.session_state.history.append(result)
-    # 統計紀錄區
-if st.session_state.history:
-    st.markdown("---")
-    st.markdown("## 📊 預測紀錄與統計")
-
-    counter = Counter(st.session_state.history)
-    total = len(st.session_state.history)
-    banker = counter.get("莊", 0)
-    player = counter.get("閒", 0)
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("總預測次數", total)
-    col2.metric("莊 次數", banker)
-    col3.metric("閒 次數", player)
-
-    st.markdown("#### 勝率：")
-    st.progress(banker / total if total > 0 else 0, text="莊 勝率", color="red")
-    st.progress(player / total if total > 0 else 0, text="閒 勝率", color="blue")
-
-    if st.button("🧽 清除所有紀錄"):
-        st.session_state.history = []
-        st.session_state.records = []
-        st.session_state.selected_cards = []
+    if st.button("✅ 記錄此局預測結果"):
+        st.session_state.records.append({
+            "banker": st.session_state.banker_cards.copy(),
+            "player": st.session_state.player_cards.copy(),
+            "result": result
+        })
+        if mode == "累積預測":
+            st.session_state.history.append(result)
+        # 清除當局
+        st.session_state.banker_cards = []
+        st.session_state.player_cards = []
         st.experimental_rerun()
-else:
-    st.info("目前尚無預測紀錄，請先選牌後紀錄。")
+        if st.session_state.history:
+    total = len(st.session_state.history)
+    win_counts = Counter(st.session_state.history)
+    banker_win = win_counts.get("莊", 0)
+    player_win = win_counts.get("閒", 0)
+    tie = win_counts.get("和或不下", 0)
+
+    b_pct = banker_win / total * 100
+    p_pct = player_win / total * 100
+    t_pct = tie / total * 100
+
+    st.markdown(f"""
+    <div style='font-size:18px; line-height:1.8'>
+        <b>📈 累積下注統計（共 {total} 局）</b><br>
+        🟥 <b style='color:red'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>)<br>
+        🟦 <b style='color:blue'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>)<br>
+        🟩 <b style='color:green'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>)
+    </div>
+    """, unsafe_allow_html=True)

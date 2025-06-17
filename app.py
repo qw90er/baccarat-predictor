@@ -57,7 +57,6 @@ with col2:
         if st.button(card + "（閒）", key="P_" + card):
             if len(st.session_state.player_cards) < 3:
                 st.session_state.player_cards.append(card)
-
     st.write("已選牌：", "、".join(st.session_state.player_cards))
     if st.button("🔁 清除閒牌"):
         st.session_state.player_cards = []
@@ -72,9 +71,7 @@ if st.session_state.history:
     b_pct = banker_win / total * 100
     p_pct = player_win / total * 100
     t_pct = tie / total * 100
-
     st.markdown("### 📈 累積下注統計（共 {} 局）".format(total))
-    
     st.markdown(f"<span style='font-size:18px;'>🟥 <b style='color:red;'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
     st.markdown(f"<span style='font-size:18px;'>🟦 <b style='color:blue;'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
     st.markdown(f"<span style='font-size:18px;'>🟩 <b style='color:green;'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>）</span>", unsafe_allow_html=True)

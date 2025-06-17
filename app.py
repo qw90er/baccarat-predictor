@@ -104,9 +104,9 @@ if st.session_state.history:
     st.markdown(f"""
     <div style='font-size:18px; line-height:1.8'>
         <b>📈 累積下注統計（共 {total} 局）</b><br>
-        🟥 <b style='color:red'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>)<br>
-        🟦 <b style='color:blue'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>)<br>
-        🟩 <b style='color:green'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>)
+        🟥 <b style='color:red;'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>）<br>
+        🟦 <b style='color:blue;'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>）<br>
+        🟩 <b style='color:green;'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>）
     </div>
     """, unsafe_allow_html=True)
 # 清除按鈕

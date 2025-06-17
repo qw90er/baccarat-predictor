@@ -83,13 +83,7 @@ if len(st.session_state.banker_cards) > 0 and len(st.session_state.player_cards)
 st.divider()
 st.subheader("📊 紀錄統計")
 
-# 統計歷史結果
-if st.session_state.records:
-    for idx, r in enumerate(st.session_state.records[::-1], 1):
-        st.markdown(
-            f"{idx}. 🟥莊：{'、'.join(r['banker'])} | 🟦閒：{'、'.join(r['player'])} → 🎯預測：**{r['result']}**"
-        )
-
+# 勝率顯示（一開始就出現）
 if st.session_state.history:
     total = len(st.session_state.history)
     win_counts = Counter(st.session_state.history)
@@ -108,7 +102,7 @@ if st.session_state.history:
         🟦 <b style='color:blue;'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>）<br>
         🟩 <b style='color:green;'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>）
     </div>
-    """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True))
 # 清除按鈕
 if st.button("🗑️ 清除所有紀錄"):
     for key in ["banker_cards", "player_cards", "records", "history"]:

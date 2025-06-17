@@ -102,7 +102,7 @@ if st.session_state.history:
         🟦 <b style='color:blue;'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>）<br>
         🟩 <b style='color:green;'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>）
     </div>
-    """, unsafe_allow_html=True))
+    """, unsafe_allow_html=True)
 # 清除按鈕
 if st.button("🗑️ 清除所有紀錄"):
     for key in ["banker_cards", "player_cards", "records", "history"]:

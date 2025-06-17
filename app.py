@@ -32,7 +32,7 @@ def predict_result(banker_cards, player_cards):
 for key in ["banker_cards", "player_cards", "records", "history"]:
     if key not in st.session_state:
         st.session_state[key] = []
-        st.title("🎴 百家樂分邊選牌預測")
+st.title("🎴 百家樂分邊選牌預測")
 
 # 模式選擇（單局 / 累積）
 mode = st.radio("模式選擇", ["單局預測", "累積預測"], horizontal=True)
@@ -57,9 +57,38 @@ with col2:
         if st.button(card + "（閒）", key="P_" + card):
             if len(st.session_state.player_cards) < 3:
                 st.session_state.player_cards.append(card)
+
     st.write("已選牌：", "、".join(st.session_state.player_cards))
     if st.button("🔁 清除閒牌"):
         st.session_state.player_cards = []
+
+# 預測與紀錄
+if len(st.session_state.banker_cards) > 0 and len(st.session_state.player_cards) > 0:
+    result = predict_result(st.session_state.banker_cards, st.session_state.player_cards)
+    color = {"莊": "red", "閒": "blue", "和或不下": "green"}[result]
+    st.markdown(f"### 🎯 **預測結果：<span style='color:{color}'>{result}</span>**", unsafe_allow_html=True)
+
+    if st.button("✅ 記錄此局預測結果"):
+        st.session_state.records.append({
+            "banker": st.session_state.banker_cards.copy(),
+            "player": st.session_state.player_cards.copy(),
+            "result": result
+        })
+        if mode == "累積預測":
+            st.session_state.history.append(result)
+        # 清除當局
+        st.session_state.banker_cards = []
+        st.session_state.player_cards = []
+        st.experimental_rerun()
+st.divider()
+st.subheader("📊 紀錄統計")
+
+# 統計歷史結果
+if st.session_state.records:
+    for idx, r in enumerate(st.session_state.records[::-1], 1):
+        st.markdown(
+            f"{idx}. 🟥莊：{'、'.join(r['banker'])} | 🟦閒：{'、'.join(r['player'])} → 🎯預測：**{r['result']}**"
+        )
 
 if st.session_state.history:
     total = len(st.session_state.history)
@@ -71,7 +100,18 @@ if st.session_state.history:
     b_pct = banker_win / total * 100
     p_pct = player_win / total * 100
     t_pct = tie / total * 100
-    st.markdown("### 📈 累積下注統計（共 {} 局）".format(total))
-    st.markdown(f"<span style='font-size:18px;'>🟥 <b style='color:red;'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
-    st.markdown(f"<span style='font-size:18px;'>🟦 <b style='color:blue;'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
-    st.markdown(f"<span style='font-size:18px;'>🟩 <b style='color:green;'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style='font-size:18px; line-height:1.8'>
+        <b>📈 累積下注統計（共 {total} 局）</b><br>
+        🟥 <b style='color:red'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>)<br>
+        🟦 <b style='color:blue'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>)<br>
+        🟩 <b style='color:green'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>)
+    </div>
+    """, unsafe_allow_html=True)
+# 清除按鈕
+if st.button("🗑️ 清除所有紀錄"):
+    for key in ["banker_cards", "player_cards", "records", "history"]:
+        st.session_state[key] = []
+    st.success("已清除所有紀錄")
+    st.experimental_rerun()

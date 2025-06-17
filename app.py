@@ -62,25 +62,7 @@ with col2:
     if st.button("🔁 清除閒牌"):
         st.session_state.player_cards = []
 
-# 預測與紀錄
-if len(st.session_state.banker_cards) > 0 and len(st.session_state.player_cards) > 0:
-    result = predict_result(st.session_state.banker_cards, st.session_state.player_cards)
-    color = {"莊": "red", "閒": "blue", "和或不下": "green"}[result]
-    st.markdown(f"### 🎯 **預測結果：<span style='color:{color}'>{result}</span>**", unsafe_allow_html=True)
-
-    if st.button("✅ 記錄此局預測結果"):
-        st.session_state.records.append({
-            "banker": st.session_state.banker_cards.copy(),
-            "player": st.session_state.player_cards.copy(),
-            "result": result
-        })
-        if mode == "累積預測":
-            st.session_state.history.append(result)
-        # 清除當局
-        st.session_state.banker_cards = []
-        st.session_state.player_cards = []
-        st.experimental_rerun()
-        if st.session_state.history:
+if st.session_state.history:
     total = len(st.session_state.history)
     win_counts = Counter(st.session_state.history)
     banker_win = win_counts.get("莊", 0)
@@ -91,11 +73,8 @@ if len(st.session_state.banker_cards) > 0 and len(st.session_state.player_cards)
     p_pct = player_win / total * 100
     t_pct = tie / total * 100
 
-    st.markdown(f"""
-    <div style='font-size:18px; line-height:1.8'>
-        <b>📈 累積下注統計（共 {total} 局）</b><br>
-        🟥 <b style='color:red'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>)<br>
-        🟦 <b style='color:blue'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>)<br>
-        🟩 <b style='color:green'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>)
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("### 📈 累積下注統計（共 {} 局）".format(total))
+    
+    st.markdown(f"<span style='font-size:18px;'>🟥 <b style='color:red;'>莊</b>：{banker_win} 局（<b>{b_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='font-size:18px;'>🟦 <b style='color:blue;'>閒</b>：{player_win} 局（<b>{p_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='font-size:18px;'>🟩 <b style='color:green;'>和或不下</b>：{tie} 局（<b>{t_pct:.1f}%</b>）</span>", unsafe_allow_html=True)
